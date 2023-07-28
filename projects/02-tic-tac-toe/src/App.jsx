@@ -70,6 +70,7 @@ function App() {
 	}
 
   const resetGame = () => {
+	//? se cambia todos los estados para empezar el juego de nuevo
     setBoard(Array(9).fill(null))
     setTurn(TURNS.X)
     setWinner(null)
