@@ -1,5 +1,6 @@
 import './App.css'
 import { useState } from 'react'
+import confetti from 'canvas-confetti'
 
 const TURNS = {
 	X: 'x',
@@ -36,23 +37,6 @@ function App() {
 	const [turn, setTurn] = useState(TURNS.X)
 	const [winner, setWinner] = useState(null)
 
-	const updateBoard = index => {
-		if (board[index] || winner) return
-
-		const newTurn = turn === TURNS.X ? TURNS.O : TURNS.X
-		setTurn(newTurn)
-
-		const newBoard = [...board]
-		newBoard[index] = turn
-		setBoard(newBoard)
-
-		const newWinner = checkWinner(newBoard)
-
-		if (newWinner) {
-			setWinner(newWinner)
-		}
-	}
-
 	const checkWinner = boardToCheck => {
 		for (const combo of WINNER_COMBOS) {
 			const [a, b, c] = combo
@@ -69,21 +53,47 @@ function App() {
 		return null
 	}
 
-  const resetGame = () => {
-	//? se cambia todos los estados para empezar el juego de nuevo
-    setBoard(Array(9).fill(null))
-    setTurn(TURNS.X)
-    setWinner(null)
-  }
+	const checkBoard = boardToCheck => {
+		return boardToCheck.every(square => square !== null)
+	}
+
+	const updateBoard = index => {
+		if (board[index] || winner) return
+
+		const newBoard = [...board]
+		newBoard[index] = turn
+		setBoard(newBoard)
+
+		const newTurn = turn === TURNS.X ? TURNS.O : TURNS.X
+		setTurn(newTurn)
+		
+		const newWinner = checkWinner(newBoard)
+
+		if (newWinner) {
+			setWinner(newWinner)
+			confetti()
+		}else if(checkBoard(newBoard)){
+			setWinner(false)
+			confetti()
+		}
+	}
+
+	const resetGame = () => {
+		//? se cambia todos los estados para empezar el juego de nuevo
+		setBoard(Array(9).fill(null))
+		setTurn(TURNS.X)
+		setWinner(null)
+	}
 
 	return (
 		<main className='board'>
 			<h1>Tic Tac Toe</h1>
+			<button onClick={resetGame}>Empezar de nuevo</button>
 			<section className='game'>
-				{board.map((_, index) => {
+				{board.map((square, index) => {
 					return (
 						<Squares key={index} index={index} updateBoard={updateBoard}>
-							{board[index]}
+							{square}
 						</Squares>
 					)
 				})}
@@ -94,24 +104,21 @@ function App() {
 				<Squares isSelected={turn === TURNS.O}>{TURNS.O}</Squares>
 			</section>
 
-      {
-        winner && (
-        <section className='winner'>
-          <div className='text'>
-            <h2>
-              {winner === false ? 'Empate' : 'Gano ' + winner}
-            </h2>
+			{winner !== null && (
+				<section className='winner'>
+					<div className='text'>
+						<h2>{winner === false ? 'Empate' : 'Gano'}</h2>
 
-            <header className='win'>
-              {winner && <Squares>{winner}</Squares>}
-            </header>
+						<header className='win'>
+							{winner !== null && <Squares>{winner}</Squares>}
+						</header>
 
-            <foooter>
-              <button onClick={resetGame}>Empezar de nuevo </button>
-            </foooter>
-          </div>
-        </section>)
-      }
+						<footer>
+							<button onClick={resetGame}>Empezar de nuevo </button>
+						</footer>
+					</div>
+				</section>
+			)}
 		</main>
 	)
 }
