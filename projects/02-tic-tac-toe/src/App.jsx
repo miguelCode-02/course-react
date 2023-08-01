@@ -7,6 +7,7 @@ const TURNS = {
 	O: 'o',
 }
 
+// funcion para crear los cuadros del tablero
 const Squares = ({ children, isSelected, updateBoard, index }) => {
 	const className = `square ${isSelected ? 'is-selected' : ''}`
 
@@ -66,7 +67,7 @@ function App() {
 
 		const newTurn = turn === TURNS.X ? TURNS.O : TURNS.X
 		setTurn(newTurn)
-		
+
 		const newWinner = checkWinner(newBoard)
 
 		if (newWinner) {
