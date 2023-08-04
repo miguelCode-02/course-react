@@ -2,64 +2,35 @@ import './App.css'
 import { useState } from 'react'
 import confetti from 'canvas-confetti'
 
-const TURNS = {
-	X: 'x',
-	O: 'o',
-}
+import { Squares } from './components/Square.jsx'
+import { TURNS } from './constants.js'
+import { checkWinner, checkEndGame } from './logic/board.js'
+import { WinnerModal } from './components/WinnerModal.jsx'
+import { BuildBoard } from './components/BuildBoard.jsx'
+import { saveGameToStorage, resetGameStorage, saveWinnerToStorage } from './logic/storage'
 
-// funcion para crear los cuadros del tablero
-const Squares = ({ children, isSelected, updateBoard, index }) => {
-	const className = `square ${isSelected ? 'is-selected' : ''}`
-
-	const handleClick = () => {
-		updateBoard(index)
-	}
-
-	return (
-		<div onClick={handleClick} className={className}>
-			{children}
-		</div>
-	)
-}
-
-const WINNER_COMBOS = [
-	[0, 1, 2], // top row
-	[3, 4, 5], // middle row
-	[6, 7, 8], // bottom row
-	[0, 4, 8], // diagonal top left to bottom right
-	[2, 4, 6], // diagonal top right to bottom left
-	[0, 3, 6], // left column
-	[1, 4, 7], // middle column
-	[2, 5, 8], // right column
-]
 
 function App() {
-	const [board, setBoard] = useState(Array(9).fill(null))
-	const [turn, setTurn] = useState(TURNS.X)
-	const [winner, setWinner] = useState(null)
 
-	const checkWinner = boardToCheck => {
-		for (const combo of WINNER_COMBOS) {
-			const [a, b, c] = combo
-			//? si a = x and b = x and c = x = ganador
-			//? si a = o and b = o and c = o = ganador
-			if (
-				boardToCheck[a] &&
-				boardToCheck[a] === boardToCheck[b] &&
-				boardToCheck[a] === boardToCheck[c]
-			) {
-				return boardToCheck[a]
-			}
-		}
-		return null
-	}
+	const [board, setBoard] = useState(() => {
+		const boardFromStorage = window.localStorage.getItem('board')
+		return boardFromStorage ? JSON.parse(boardFromStorage) : Array(9).fill(null)
+	})
 
-	const checkBoard = boardToCheck => {
-		return boardToCheck.every(square => square !== null)
-	}
+	const [turn, setTurn] = useState(() => {
+		const turnFromStorage = window.localStorage.getItem('turn')
+		return turnFromStorage ?? TURNS.X
+	})
+
+	const [winner, setWinner] = useState(() => {
+		const winnerFromStorage = window.localStorage.getItem('winner')
+		return winnerFromStorage ? winnerFromStorage : null
+	})
+
+	const [showBoard, setShowBoard] = useState(false)
 
 	const updateBoard = index => {
-		if (board[index] || winner) return
+		if (board[index] || winner ) return
 
 		const newBoard = [...board]
 		newBoard[index] = turn
@@ -68,36 +39,47 @@ function App() {
 		const newTurn = turn === TURNS.X ? TURNS.O : TURNS.X
 		setTurn(newTurn)
 
-		const newWinner = checkWinner(newBoard)
+		saveGameToStorage({board : newBoard, turn: newTurn})
 
+		const newWinner = checkWinner(newBoard)
 		if (newWinner) {
 			setWinner(newWinner)
+			setShowBoard(true)
 			confetti()
-		}else if(checkBoard(newBoard)){
+			saveWinnerToStorage(newWinner)
+		}else if(checkEndGame(newBoard)){
 			setWinner(false)
+			setShowBoard(true)
 			confetti()
 		}
+
 	}
 
 	const resetGame = () => {
 		//? se cambia todos los estados para empezar el juego de nuevo
+		setShowBoard(false)
 		setBoard(Array(9).fill(null))
 		setTurn(TURNS.X)
 		setWinner(null)
+		resetGameStorage()
+	}
+
+	const showSolvedBoard = () => {
+		setShowBoard(false)
+	}
+
+	const showGameResult = () => {
+		setShowBoard(true)
+
 	}
 
 	return (
 		<main className='board'>
 			<h1>Tic Tac Toe</h1>
 			<button onClick={resetGame}>Empezar de nuevo</button>
+			{!showBoard && winner  && <button onClick={showGameResult}>Mostrar ganador</button>}
 			<section className='game'>
-				{board.map((square, index) => {
-					return (
-						<Squares key={index} index={index} updateBoard={updateBoard}>
-							{square}
-						</Squares>
-					)
-				})}
+				<BuildBoard board={board} updateBoard={updateBoard} />
 			</section>
 
 			<section className='turn'>
@@ -105,21 +87,7 @@ function App() {
 				<Squares isSelected={turn === TURNS.O}>{TURNS.O}</Squares>
 			</section>
 
-			{winner !== null && (
-				<section className='winner'>
-					<div className='text'>
-						<h2>{winner === false ? 'Empate' : 'Gano'}</h2>
-
-						<header className='win'>
-							{winner !== null && <Squares>{winner}</Squares>}
-						</header>
-
-						<footer>
-							<button onClick={resetGame}>Empezar de nuevo </button>
-						</footer>
-					</div>
-				</section>
-			)}
+			<WinnerModal resetGame={resetGame} showSolvedBoard={showSolvedBoard} winner={winner} showBoard={showBoard}/>
 		</main>
 	)
 }
