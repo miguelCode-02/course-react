@@ -1,34 +1,62 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '../../../../../../../../vite.svg'
 import './App.css'
+import './index.css'
+import { useEffect, useState } from 'react'
+import logoReact from './assets/react.svg'
 
-function App () {
-  const [count, setCount] = useState(0)
+const FollowMouse = () => {
+  const [enabled, setEnabled] = useState(false)
+  const [position, setPosition] = useState({ x: 0, y: 0 })
+
+  useEffect(() => {
+    const handleMove = (e) => {
+      const { clientX, clientY } = e
+      setPosition({ x: clientX, y: clientY })
+    }
+
+    if (enabled) {
+      document.body.className = 'no-cursor'
+      window.addEventListener('mousemove', handleMove)
+    }
+
+    return () => {
+      console.log('Cleanup')
+      window.removeEventListener('mousemove', handleMove)
+      document.body.className = ''
+    }
+  }, [enabled])
 
   return (
     <>
-      <div>
-        <a href='https://vitejs.dev' target='_blank' rel='noreferrer'>
-          <img src={viteLogo} className='logo' alt='Vite logo' />
-        </a>
-        <a href='https://react.dev' target='_blank' rel='noreferrer'>
-          <img src={reactLogo} className='logo react' alt='React logo' />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className='card'>
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className='read-the-docs'>
-        Click on the Vite and React logos to learn more
-      </p>
+      <img
+        src={logoReact} style={{
+          position: 'fixed',
+          borderRadius: '50%',
+          opacity: 0.8,
+          pointerEvents: 'none',
+          left: -25,
+          top: -25,
+          width: 50,
+          height: 50,
+          transform: `translate(${position.x}px, ${position.y}px)`
+        }}
+      />
+      <button type='button' onClick={() => setEnabled(!enabled)}>
+        {enabled ? 'Desactivar' : 'Activar'} seguir el puntero
+      </button>
     </>
+  )
+}
+
+function App () {
+  const [mounted, setMounted] = useState(false)
+
+  return (
+    <main>
+      {mounted && <FollowMouse />}
+      <button type='button' onClick={() => setMounted(!mounted)}>
+        {mounted ? 'Desmontar Componente' : 'Montar Componente'}
+      </button>
+    </main>
   )
 }
 
