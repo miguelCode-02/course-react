@@ -9,8 +9,6 @@ export function useFilter () {
 
   const { filters, setFilters } = useContext(FiltersContext)
 
-  console.log(filters)
-
   const filterProducts = (products) => {
     return products.filter((product) => {
       return (
@@ -19,5 +17,5 @@ export function useFilter () {
     })
   }
 
-  return { filterProducts, setFilters }
+  return { filterProducts, setFilters, filters }
 }
