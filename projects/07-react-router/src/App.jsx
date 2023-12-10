@@ -25,7 +25,10 @@ const ROUTER = [{
 function App () {
   return (
     <main>
-      <Router router={ROUTER} defaultComponent={NoFoundPage} />
+      <Router router={ROUTER} defaultComponent={NoFoundPage}>
+        <Route path='/' component={HomePage} />
+        <Route path='/about' component={AboutPage} />
+      </Router>
     </main>
   )
 }
