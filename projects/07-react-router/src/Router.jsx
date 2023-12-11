@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, Children } from 'react'
 import { EVENTS } from './consts.js'
 import { match } from 'path-to-regexp'
+import { getCurrentPath } from './utils.js'
 
-export function Router ({ router = [], defaultComponent: DefaultComponent = () => <h1>404</h1> }) {
-  const [currentPage, setCurrentPage] = useState(window.location.pathname)
+export function Router ({ children, router = [], defaultComponent: DefaultComponent = () => <h1>404</h1> }) {
+  const [currentPage, setCurrentPage] = useState(getCurrentPath())
 
   useEffect(() => {
     const onlocationChange = () => {
-      setCurrentPage(window.location.pathname)
+      setCurrentPage(getCurrentPath())
     }
 
     window.addEventListener(EVENTS.PUSHSTATE, onlocationChange)
@@ -21,13 +22,21 @@ export function Router ({ router = [], defaultComponent: DefaultComponent = () =
 
   let routeParams = {}
 
-  const Page = router.find(({ path }) => {
+  const routesFromChildren = Children.map(children, ({ props, type }) => {
+    const { name } = type
+    const isRoute = name === 'Route'
+    return isRoute ? props : null
+  })
+
+  const routesToUse = router.concat(routesFromChildren).filter(Boolean)
+
+  console.log(routesToUse)
+
+  const Page = routesToUse.find(({ path }) => {
     if (path === currentPage) return true
     const matcherUrl = match(path, { decode: decodeURIComponent })
     const matched = matcherUrl(currentPage)
     if (!matched) return false
-
-    console.log(matched)
 
     routeParams = matched.params
     return true
